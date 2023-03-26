@@ -2,6 +2,7 @@ package httpServer
 
 import cats._
 import cats.effect._
+import config.Configuration.ConfigInstance
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.implicits._
@@ -16,13 +17,16 @@ object SimpleServer {
 
     lazy val testRoutes: HttpRoutes[IO] =
         HttpRoutes.of[IO] {
-            case GET -> Root / "test" => Ok("Hello")
+            case GET -> Root / "test" / msg => {
+                println(msg)
+                Ok("Hello")
+            }
         }
 
-    def run(): IO[ExitCode] = {
+    def run(config: ConfigInstance): IO[ExitCode] = {
         val router = Router("/" -> testRoutes).orNotFound
         BlazeServerBuilder[IO](global)
-            .bindHttp(8080, "localhost")
+            .bindHttp(config.serverNetwork.port, config.serverNetwork.host)
             .withHttpApp(router)
             .resource.use(_ => IO.never)
     }
