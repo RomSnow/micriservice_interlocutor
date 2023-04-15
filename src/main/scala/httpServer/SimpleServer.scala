@@ -1,6 +1,5 @@
 package httpServer
 
-import cats._
 import cats.effect._
 import config.Configuration.ConfigInstance
 import org.http4s._

@@ -24,7 +24,7 @@ object SimpleClient {
     private def generateUrl(config: ConfigInstance) = IO{
         val recipientNumber = Random.between(1, config.interlocutorsInfo.count)
         val str = Iterator.continually(Random.nextPrintableChar()).filter(_.isLetterOrDigit).take(6).mkString
-        s"http://${config.interlocutorsInfo.name}:8080/test/$str"
+        s"http://${config.interlocutorsInfo.name}_$recipientNumber:8080/test/$str"
     }
 
     def start(config: ConfigInstance) = {

@@ -6,7 +6,6 @@ import scala.util.Try
 
 object Configuration {
     case class ConfigInstance(
-        test: String,
         serverNetwork: ServerNetwork,
         interlocutorsInfo: InterlocutorsInfo
     )
@@ -14,7 +13,6 @@ object Configuration {
     object ConfigInstance {
         def from(config: Config): ConfigInstance =
             ConfigInstance(
-                config.getString("test"),
                 ServerNetwork.from(config),
                 InterlocutorsInfo.from(config)
             )
