@@ -1,8 +1,6 @@
 #!/bin/bash
 
 containerName='microservice_model';
-HTTP_SERVER_HOST=localhost;
-HTTP_SERVER_PORT=8080;
 
 while getopts n: flag
 do
@@ -25,13 +23,14 @@ docker network rm sendbox;
 # create network
 
 docker network create --driver bridge \
-  --subnet 192.168.0.0/16 sendbox;
+  --subnet 192.168.0.0/16 sandbox;
 
 #start containers
 
 for i in $(seq 1 $count); do
   echo "${containerName}_${i}";
-  docker run -d --net sendbox --env-file .env -e INTERLOCUTORS_COUNT=$count \
+  docker run -d --net sandbox --expose=80 --env-file .env \
+   -e INTERLOCUTORS_COUNT=$count \
    -e INTERLOCUTORS_NAME=$containerName --name "${containerName}_${i}" microservice_interlocutor;
 done
 
