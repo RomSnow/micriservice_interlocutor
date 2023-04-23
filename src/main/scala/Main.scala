@@ -1,16 +1,22 @@
 import cats.effect.{ExitCode, IO, IOApp}
-import cats.syntax.all._
 import config.Configuration
-import httpServer.{SimpleClient, SimpleServer}
+import generator.InfoGenerator
+import httpServer.{HttpClient, HttpServer}
+import statSaver.StatisticSaver
 
 object Main extends IOApp {
     val serverFunc = for {
         configuration <- IO.fromEither(Configuration.init())
-        server             <- SimpleServer.run(configuration).start
-        client             <- SimpleClient.start(configuration).start
+
+        client        = new HttpClient(configuration)
+        infoGenerator = new InfoGenerator(configuration, client)
+        statisticSaver = new StatisticSaver(configuration)
+
+        server           <- HttpServer.run(configuration, statisticSaver).start
+        messageGenerator <- infoGenerator.startMessageGeneration().start
 
         _ <- server.join
-        _ <- client.join
+        _ <- messageGenerator.join
     } yield ()
 
     override def run(args: List[String]): IO[ExitCode] =

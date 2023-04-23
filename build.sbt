@@ -9,7 +9,8 @@ lazy val root = (project in file("."))
         libraryDependencies ++=
             catsEffect ++
                 http4sServer ++
-                config
+                config ++
+                openCSV
     )
 
 externalResolvers := Resolver.defaults
@@ -22,5 +23,6 @@ lazy val http4sServer: Seq[ModuleID] = Seq(
 )
 lazy val config     = Seq("com.typesafe" % "config" % "1.4.2")
 lazy val catsEffect = Seq("org.typelevel" %% "cats-effect" % "2.1.4")
+lazy val openCSV = Seq("com.opencsv" % "opencsv" % "5.3")
 
 enablePlugins(JavaAppPackaging)
