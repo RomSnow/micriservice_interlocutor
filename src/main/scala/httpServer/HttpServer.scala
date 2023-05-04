@@ -1,6 +1,7 @@
 package httpServer
 
 import cats.effect._
+import cipher.XORCipher
 import config.Configuration.ConfigInstance
 import httpServer.utils.LocalDateVar
 import org.http4s._
@@ -29,6 +30,12 @@ object HttpServer {
                     _ <- saver.saveResultInFile(id, date, LocalDateTime.now, body)
                         .handleErrorWith(e => IO(println("Не удалось записать данные в файл " + e.getMessage)))
                     result <- Ok(id.toString)
+                } yield result
+
+            case req @ POST -> Root / "cipher" / UUIDVar(id) / "key" / key =>
+                for {
+                    body <- req.as[String]
+                    result <- Ok(XORCipher.encryptOrDecrypt(body, key))
                 } yield result
         }
 

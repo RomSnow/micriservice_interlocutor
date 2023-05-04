@@ -25,7 +25,7 @@ docker build -t microservice_interlocutor . ;
 # create network
 
 docker network create --driver bridge \
-  --subnet 192.168.0.0/16 sandbox;
+  --subnet 192.168.0.0/24 sandbox;
 
 #start containers
 
@@ -36,6 +36,7 @@ for i in $(seq 1 $count); do
    -e INTERLOCUTORS_COUNT=$count \
    -e INTERLOCUTORS_NAME=$containerName \
    -e STAT_FILE_FULL_NAME=/data/result.txt \
+   -e SERVICE_TYPE=http \
    -v ~/containers_data/$i:/data \
    --name "${containerName}_${i}" microservice_interlocutor;
 done
