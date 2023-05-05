@@ -55,7 +55,8 @@ object Configuration {
     case class GenerationConf(
         infoSize: Int,
         sendDurationSec: Int,
-        keyMaxSize: Int
+        keyMaxSize: Int,
+        redirectPathMaxSize: Int
     )
 
     object GenerationConf {
@@ -63,7 +64,8 @@ object Configuration {
             GenerationConf(
                 infoSize = config.getInt("generation_info.info_symbol_count"),
                 sendDurationSec = config.getInt("generation_info.send_duration_seconds"),
-                keyMaxSize = config.getInt("generation_info.key_max_size")
+                keyMaxSize = config.getInt("generation_info.key_max_size"),
+                redirectPathMaxSize = config.getInt("generation_info.redirect_path_max_size")
             )
     }
 

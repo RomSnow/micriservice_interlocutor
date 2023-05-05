@@ -10,11 +10,11 @@ class InfoGenerator(config: ConfigInstance) {
     private def id: UUID = UUID.randomUUID()
 
     @tailrec
-    private def getDestination(currentInt: Int): Int =
-        if (currentInt == config.interlocutorsInfo.selfNumber)
-            getDestination(Random.between(1, config.interlocutorsInfo.count + 1))
+    private def getDestination(nextInt: Int, currentInt: Int = config.interlocutorsInfo.selfNumber): Int =
+        if (nextInt == currentInt)
+            getDestination(Random.between(1, config.interlocutorsInfo.count + 1), currentInt)
         else
-            currentInt
+            nextInt
 
     private def destination: Int = getDestination(config.interlocutorsInfo.selfNumber)
 
@@ -23,6 +23,13 @@ class InfoGenerator(config: ConfigInstance) {
 
     private def genKey(): String =
         Random.alphanumeric.take(config.generationInfo.keyMaxSize).mkString
+
+    def getRedirectPath(): List[Int] =
+        (1 until config.generationInfo.keyMaxSize).foldLeft(List(config.interlocutorsInfo.selfNumber)) { case (l, _) =>
+            val last = l.head
+            val next = getDestination(last, last)
+            next :: l
+        }
 
     def genInfo(): GenerationInfo = GenerationInfo(
         id, destination, generateSource().mkString, genKey()

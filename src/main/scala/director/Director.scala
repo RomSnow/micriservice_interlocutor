@@ -14,8 +14,12 @@ trait Director {
     protected val config: ConfigInstance
     implicit val timer: Timer[IO]
 
-    private val scripts: Seq[() => IO[Unit]] = List(() => startP2PScript())
+    private val scripts: Seq[() => IO[Unit]] = List(
+        () => startP2PScript(),
+        () => startBroadcastScript()
+    )
     def startP2PScript(): IO[Unit]
+    def startBroadcastScript(): IO[Unit]
 
     def startRandomWorks(): IO[Unit] = {
         for {
