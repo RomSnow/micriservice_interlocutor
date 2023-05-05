@@ -11,14 +11,10 @@ import org.http4s.server.Router
 import org.http4s.server.blaze._
 import statSaver.StatisticSaver
 
-import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.global
 
-object HttpServer {
-    implicit val cs: ContextShift[IO] = IO.contextShift(global)
-    implicit val timer: Timer[IO] = IO.timer(global)
-
-    lazy val routes: StatisticSaver => HttpRoutes[IO] = (saver: StatisticSaver) =>
+class HttpServer(config: ConfigInstance)(implicit time: Timer[IO], context: ContextShift[IO]) {
+    lazy val routes =
         HttpRoutes.of[IO] {
             case GET -> Root / "test" / msg => {
                 println(msg)
@@ -27,8 +23,6 @@ object HttpServer {
             case req @ POST -> Root / "message" / UUIDVar(id) / "time" / LocalDateVar(date) =>
                 for {
                     body <- req.as[String]
-                    _ <- saver.saveResultInFile(id, date, LocalDateTime.now, body)
-                        .handleErrorWith(e => IO(println("Не удалось записать данные в файл " + e.getMessage)))
                     result <- Ok(id.toString)
                 } yield result
 
@@ -39,8 +33,8 @@ object HttpServer {
                 } yield result
         }
 
-    def run(config: ConfigInstance, saver: StatisticSaver): IO[ExitCode] = {
-        val router = Router("/" -> routes(saver)).orNotFound
+    def run(): IO[ExitCode] = {
+        val router = Router("/" -> routes).orNotFound
         BlazeServerBuilder[IO](global)
             .bindHttp(config.serverNetwork.port, config.serverNetwork.host)
             .withHttpApp(router)

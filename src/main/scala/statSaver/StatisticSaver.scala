@@ -13,16 +13,18 @@ import scala.util._
 class StatisticSaver(config: ConfigInstance) {
     initFile()
 
-    private val headers = List("id", "sendTime", "receivingTime", "content")
+    private val headers = List("id", "actionType", "destination", "time", "content", "variables")
     def saveResultInFile(
         id: UUID,
-        sendTime: LocalDateTime,
-        receivingTime: LocalDateTime,
-        content: String
+        actionType: String,
+        destination: Int,
+        time: LocalDateTime,
+        content: String,
+        variables: List[String] = Nil
     ): IO[Unit] = IO.fromTry {
-        val s = List(id.toString, sendTime.toString, receivingTime.toString, content)
+        val s = List(id.toString, actionType, destination.toString, time.toString, content, variables.mkString("##"))
         writeCsvFile(config.fileConf.fullFileName, s)
-    }
+    }.handleErrorWith(e => IO(println("Не удалось записать данные в файл " + e.getMessage)))
 
     private def initFile() = {
         new File(config.fileConf.fullFileName).createNewFile()

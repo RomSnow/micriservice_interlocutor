@@ -1,6 +1,6 @@
 import cats.effect.{ExitCode, IO, IOApp}
 import config.Configuration
-import director.{Client, HTTPDirector}
+import director.HTTPDirector
 import generator.InfoGenerator
 import httpServer.{HttpClient, HttpServer}
 import statSaver.StatisticSaver
@@ -13,11 +13,11 @@ object Main extends IOApp {
         statisticSaver = new StatisticSaver(configuration)
         director = configuration.testType match {
             case "http" =>
-                new HTTPDirector(infoGenerator, new HttpClient(configuration), configuration)
-            case _ => new HTTPDirector(infoGenerator, new HttpClient(configuration), configuration)
+                new HTTPDirector(infoGenerator, new HttpClient(configuration), configuration, statisticSaver)
+            case _ => new HTTPDirector(infoGenerator, new HttpClient(configuration), configuration, statisticSaver)
         }
 
-        server           <- HttpServer.run(configuration, statisticSaver).start
+        server           <- new HttpServer(configuration).run().start
         messageGenerator <- director.startRandomWorks().start
 
         _ <- server.join

@@ -21,14 +21,13 @@ class InfoGenerator(config: ConfigInstance) {
     private def generateSource(): LazyList[Char] =
         Random.alphanumeric.take(config.generationInfo.infoSize)
 
-
     def genInfo(): GenerationInfo = GenerationInfo(
-        id, destination, generateSource()
+        id, destination, generateSource().mkString
     )
 }
 
 case class GenerationInfo(
     id: UUID,
     destination: Int,
-    source: LazyList[Char]
+    source: String
 )

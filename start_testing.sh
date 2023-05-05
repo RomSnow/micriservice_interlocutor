@@ -2,10 +2,11 @@
 
 containerName='microservice_model';
 
-while getopts n: flag
+while getopts n:t: flag
 do
     case "${flag}" in
         n) count=${OPTARG};;
+        t) test_type=${OPTARG};;
     esac
 done
 
@@ -36,7 +37,7 @@ for i in $(seq 1 $count); do
    -e INTERLOCUTORS_COUNT=$count \
    -e INTERLOCUTORS_NAME=$containerName \
    -e STAT_FILE_FULL_NAME=/data/result.txt \
-   -e SERVICE_TYPE=http \
+   -e SERVICE_TYPE=$test_type \
    -v ~/containers_data/$i:/data \
    --name "${containerName}_${i}" microservice_interlocutor;
 done

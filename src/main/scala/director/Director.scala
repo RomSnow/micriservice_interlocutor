@@ -1,10 +1,9 @@
 package director
 
-import cats.effect.IO
+import cats.effect.{IO, Timer}
 import cats.implicits.catsSyntaxFlatMapOps
 import config.Configuration.ConfigInstance
 import generator.InfoGenerator
-import httpServer.HttpServer.timer
 
 import scala.concurrent.duration.DurationInt
 import scala.util.Random
@@ -13,9 +12,10 @@ trait Director {
     protected val infoGenerator: InfoGenerator
     protected val client: Client
     protected val config: ConfigInstance
+    implicit val timer: Timer[IO]
 
-    private val scripts: Seq[() => IO[String]] = List(() => startP2PScript())
-    def startP2PScript(): IO[String]
+    private val scripts: Seq[() => IO[Unit]] = List(() => startP2PScript())
+    def startP2PScript(): IO[Unit]
 
     def startRandomWorks(): IO[Unit] = {
         for {
