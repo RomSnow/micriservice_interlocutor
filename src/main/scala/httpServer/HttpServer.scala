@@ -26,7 +26,7 @@ class HttpServer(config: ConfigInstance)(implicit time: Timer[IO], context: Cont
                     result <- Ok(id.toString)
                 } yield result
 
-            case req @ POST -> Root / "cipher" / UUIDVar(id) / "key" / key =>
+            case req @ POST -> Root / "p2p" / UUIDVar(id) / "key" / key =>
                 for {
                     body <- req.as[String]
                     result <- Ok(XORCipher.encryptOrDecrypt(body, key))

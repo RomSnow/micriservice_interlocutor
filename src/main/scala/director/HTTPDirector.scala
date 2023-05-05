@@ -17,9 +17,9 @@ class HTTPDirector(
 
     override def startP2PScript(): IO[Unit] = {
         val info = infoGenerator.genInfo()
-        val path = s"/message/${info.id}/time/${LocalDateTime.now}"
+        val path = s"/p2p/${info.id}/key/${info.key}"
         for {
-            saveSend <- saver.saveResultInFile(info.id, "sendP2P", info.destination, LocalDateTime.now, info.source).start
+            saveSend <- saver.saveResultInFile(info.id, "sendP2P", info.destination, LocalDateTime.now, info.source, List(info.key)).start
             result <- client.makeRequest(info, path)
             saveResult <- saver.saveResultInFile(info.id, "responseP2P", info.destination, LocalDateTime.now, result).start
             _ <- saveSend.join

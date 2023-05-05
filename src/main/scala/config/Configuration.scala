@@ -54,14 +54,16 @@ object Configuration {
 
     case class GenerationConf(
         infoSize: Int,
-        sendDurationSec: Int
+        sendDurationSec: Int,
+        keyMaxSize: Int
     )
 
     object GenerationConf {
         def from(config: Config): GenerationConf =
             GenerationConf(
                 infoSize = config.getInt("generation_info.info_symbol_count"),
-                sendDurationSec = config.getInt("generation_info.send_duration_seconds")
+                sendDurationSec = config.getInt("generation_info.send_duration_seconds"),
+                keyMaxSize = config.getInt("generation_info.key_max_size")
             )
     }
 
