@@ -21,7 +21,7 @@ mkdir ~/containers_data;
 docker network rm sandbox;
 
 # build image
-#docker build -t microservice_interlocutor . ;
+docker build -t microservice_interlocutor . ;
 
 # create network
 

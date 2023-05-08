@@ -16,10 +16,12 @@ trait Director {
 
     private val scripts: Seq[() => IO[Unit]] = List(
         () => startP2PScript(),
-        () => startBroadcastScript()
+        () => startBroadcastScript(),
+        () => startRedirectScript()
     )
     def startP2PScript(): IO[Unit]
     def startBroadcastScript(): IO[Unit]
+    def startRedirectScript(): IO[Unit]
 
     def startRandomWorks(): IO[Unit] = {
         for {
@@ -28,5 +30,5 @@ trait Director {
             _      <- script()
             _      <- IO.sleep(config.generationInfo.sendDurationSec.seconds)
         } yield ()
-    }.foreverM
+    }.handleErrorWith(e => IO(println("ERROR " + e.getMessage))).foreverM
 }

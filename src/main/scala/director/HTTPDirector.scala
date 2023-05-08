@@ -1,7 +1,7 @@
 package director
 
 import cats.effect.{ContextShift, IO, Timer}
-import cats.implicits.{catsStdInstancesForList, catsSyntaxFlatMapOps, catsSyntaxParallelSequence}
+import cats.implicits.{catsStdInstancesForList, catsSyntaxParallelSequence}
 import config.Configuration.ConfigInstance
 import generator.InfoGenerator
 import httpServer.HttpClient
@@ -30,7 +30,7 @@ class HTTPDirector(
 
     override def startBroadcastScript(): IO[Unit] = {
         val info = infoGenerator.genInfo()
-        val allInterlocutors = (1 until config.interlocutorsInfo.count)
+        val allInterlocutors = (1 to config.interlocutorsInfo.count)
             .filterNot(_ == config.interlocutorsInfo.selfNumber).toList
         val path = s"/p2p/${info.id}/key/${info.key}"
         allInterlocutors.map { dest =>
@@ -42,5 +42,18 @@ class HTTPDirector(
                 _ <- saveResult.join
             } yield ()
         }.parSequence.void
+    }
+
+    override def startRedirectScript(): IO[Unit] = {
+        val redirectPath = infoGenerator.getRedirectPath()
+        val info = infoGenerator.genInfo().copy(destination = redirectPath.head)
+        val infoWithRedirList = info.copy(source = redirectPath.tail.mkString(";") + "\n" + info.source)
+        val path = s"/redirect/${info.id}/from/${config.interlocutorsInfo.selfNumber}/key/${info.key}"
+        for {
+            save <- saver.saveResultInFile(info.id, "startRedirect", info.destination, LocalDateTime.now,
+                info.source, List(info.key, redirectPath.mkString(";"))).start
+            _ <- client.makeRequest(infoWithRedirList, path)
+            _ <- save.join
+        } yield ()
     }
 }

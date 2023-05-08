@@ -3,6 +3,8 @@ package httpServer
 import cats.effect._
 import cipher.XORCipher
 import config.Configuration.ConfigInstance
+import director.Client
+import generator.GenerationInfo
 import httpServer.utils.LocalDateVar
 import org.http4s._
 import org.http4s.dsl.io._
@@ -11,9 +13,11 @@ import org.http4s.server.Router
 import org.http4s.server.blaze._
 import statSaver.StatisticSaver
 
-import scala.concurrent.ExecutionContext.global
+import java.time.LocalDateTime
+import scala.concurrent.ExecutionContext
 
-class HttpServer(config: ConfigInstance)(implicit time: Timer[IO], context: ContextShift[IO]) {
+class HttpServer(config: ConfigInstance, client: Client, saver: StatisticSaver)
+                (implicit time: Timer[IO], context: ContextShift[IO], executionContext: ExecutionContext) {
     lazy val routes =
         HttpRoutes.of[IO] {
             case GET -> Root / "test" / msg => {
@@ -31,11 +35,41 @@ class HttpServer(config: ConfigInstance)(implicit time: Timer[IO], context: Cont
                     body <- req.as[String]
                     result <- Ok(XORCipher.encryptOrDecrypt(body, key))
                 } yield result
+
+            case req @ POST -> Root / "redirect" / UUIDVar(id) / "from" / IntVar(host) / "key" / key => {
+                def saveReturn(content: String): IO[Response[IO]] = {
+                    saver.saveResultInFile(id, "redirectReturn", config.interlocutorsInfo.selfNumber,
+                        LocalDateTime.now, XORCipher.encryptOrDecrypt(content, key)) *>
+                        Ok("")
+                }
+
+                def redirectToNext(nextNumber: Int, redirectPath: String, content: String) = {
+                    val cryptContent = XORCipher.encryptOrDecrypt(content, key)
+                    val info = GenerationInfo(id, nextNumber, cryptContent, key)
+                    val infoWithRedirList = info.copy(source = redirectPath + "\n" + info.source)
+                    for {
+                        _ <- saver.saveResultInFile(id, "redirectNext",
+                            nextNumber, LocalDateTime.now, info.source, List(redirectPath))
+                        _ <- client.makeRequest(infoWithRedirList, s"/redirect/$id/from/$host/key/$key").start
+                        result <- Ok("")
+                    } yield result
+                }
+
+                for {
+                    body <- req.as[String]
+                    nextStr = body.takeWhile(_ != '\n')
+                    nextNumber = nextStr.split(';').headOption.flatMap(_.toIntOption)
+                    content = body.dropWhile(_ != '\n').drop(1)
+                    result <- nextNumber.fold(saveReturn(content)) { redirNext =>
+                        redirectToNext(redirNext, nextStr.split(';').tail.mkString(";"), content)
+                    }
+                } yield result
+            }
         }
 
     def run(): IO[ExitCode] = {
         val router = Router("/" -> routes).orNotFound
-        BlazeServerBuilder[IO](global)
+        BlazeServerBuilder[IO](executionContext)
             .bindHttp(config.serverNetwork.port, config.serverNetwork.host)
             .withHttpApp(router)
             .resource.use(_ => IO.never)
