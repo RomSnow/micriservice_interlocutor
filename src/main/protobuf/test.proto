@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package grpc;
+
+service Interlocutor {
+  rpc p2p (RequestInfo) returns (RequestResult) {}
+}
+
+message RequestInfo {
+  string uuid = 1;
+  string key = 2;
+  string content = 3;
+}
+
+message RequestResult {
+  string content = 1;
+}

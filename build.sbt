@@ -10,11 +10,12 @@ lazy val root = (project in file("."))
             catsEffect ++
                 http4sServer ++
                 config ++
-                openCSV
+                openCSV ++
+                grpc
     )
 
 externalResolvers := Resolver.defaults
-lazy val Http4sVersion = "0.21.7"
+val Http4sVersion = "0.23.9"
 lazy val http4sServer: Seq[ModuleID] = Seq(
     "org.http4s" %% "http4s-dsl"          % Http4sVersion,
     "org.http4s" %% "http4s-circe"        % Http4sVersion,
@@ -22,7 +23,10 @@ lazy val http4sServer: Seq[ModuleID] = Seq(
     "org.http4s" %% "http4s-blaze-client" % Http4sVersion
 )
 lazy val config     = Seq("com.typesafe" % "config" % "1.4.2")
-lazy val catsEffect = Seq("org.typelevel" %% "cats-effect" % "2.1.4")
+lazy val catsEffect = Seq("org.typelevel" %% "cats-effect" % "3.2.9")
 lazy val openCSV = Seq("com.opencsv" % "opencsv" % "5.3")
+lazy val grpc = Seq(
+    "io.grpc" % "grpc-netty-shaded" % scalapb.compiler.Version.grpcJavaVersion
+)
 
-enablePlugins(JavaAppPackaging)
+enablePlugins(JavaAppPackaging, Fs2Grpc)

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-containerName='microservice_model';
+containerName='microservice-model';
 
 while getopts n:t: flag
 do
@@ -31,7 +31,7 @@ docker network create --driver bridge \
 #start containers
 
 for i in $(seq 1 $count); do
-  echo "${containerName}_${i}";
+  echo "${containerName}-${i}";
   docker run -d --net sandbox --expose=80 --env-file .env \
    -e INTERLOCUTOR_SELF_NUMBER=$i \
    -e INTERLOCUTORS_COUNT=$count \
@@ -39,7 +39,7 @@ for i in $(seq 1 $count); do
    -e STAT_FILE_FULL_NAME=/data/result.txt \
    -e SERVICE_TYPE=$test_type \
    -v ~/containers_data/$i:/data \
-   --name "${containerName}_${i}" microservice_interlocutor;
+   --name "${containerName}-${i}" microservice_interlocutor;
 done
 
 

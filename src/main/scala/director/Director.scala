@@ -1,7 +1,6 @@
 package director
 
-import cats.effect.{IO, Timer}
-import cats.implicits.catsSyntaxFlatMapOps
+import cats.effect.IO
 import config.Configuration.ConfigInstance
 import generator.InfoGenerator
 
@@ -12,7 +11,6 @@ trait Director {
     protected val infoGenerator: InfoGenerator
     protected val client: Client
     protected val config: ConfigInstance
-    implicit val timer: Timer[IO]
 
     private val scripts: Seq[() => IO[Unit]] = List(
         () => startP2PScript(),
@@ -39,5 +37,5 @@ trait Director {
             _      <- script()
             _      <- IO.sleep(config.generationInfo.sendDurationSec.seconds)
         } yield ()
-    }.handleErrorWith(e => IO(println("ERROR " + e.getMessage))).foreverM
+    }.handleErrorWith(e => IO(println("DIRECTOR ERROR " + e.getMessage))).foreverM
 }

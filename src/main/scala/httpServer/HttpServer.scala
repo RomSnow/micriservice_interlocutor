@@ -3,27 +3,24 @@ package httpServer
 import cats.effect._
 import cipher.XORCipher
 import config.Configuration.ConfigInstance
-import director.Client
+import director.{Client, Server}
 import generator.GenerationInfo
 import httpServer.utils.LocalDateVar
 import org.http4s._
+import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.dsl.io._
 import org.http4s.implicits._
 import org.http4s.server.Router
-import org.http4s.server.blaze._
 import statSaver.StatisticSaver
 
 import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext
 
 class HttpServer(config: ConfigInstance, client: Client, saver: StatisticSaver)
-                (implicit time: Timer[IO], context: ContextShift[IO], executionContext: ExecutionContext) {
+                (implicit val executionContext: ExecutionContext) extends Server {
     lazy val routes =
         HttpRoutes.of[IO] {
-            case GET -> Root / "test" / msg => {
-                println(msg)
-                Ok("Hello")
-            }
+
             case req @ POST -> Root / "message" / UUIDVar(id) / "time" / LocalDateVar(date) =>
                 for {
                     body <- req.as[String]
@@ -66,8 +63,7 @@ class HttpServer(config: ConfigInstance, client: Client, saver: StatisticSaver)
                 } yield result
             }
         }
-
-    def run(): IO[ExitCode] = {
+    override def run(): IO[ExitCode] = {
         val router = Router("/" -> routes).orNotFound
         BlazeServerBuilder[IO](executionContext)
             .bindHttp(config.serverNetwork.port, config.serverNetwork.host)

@@ -1,7 +1,9 @@
 import cats.effect.{ExitCode, IO, IOApp}
 import config.Configuration
-import director.HTTPDirector
+import config.Configuration.ConfigInstance
+import director.{Client, HTTPDirector}
 import generator.InfoGenerator
+import grpc.{GRPCClient, GRPCServer}
 import httpServer.{HttpClient, HttpServer}
 import statSaver.StatisticSaver
 
@@ -12,19 +14,29 @@ import scala.concurrent.duration.DurationInt
 object Main extends IOApp {
     implicit val execContext: ExecutionContextExecutor = global
 
+    val clientF = (configuration: ConfigInstance) =>
+        configuration.testType match {
+            case "http" => new HttpClient(configuration)
+            case "grpc" => new GRPCClient(configuration)
+            case _      => new HttpClient(configuration)
+        }
+
+    val serverF = (configuration: ConfigInstance, client: Client, statisticSaver: StatisticSaver) =>
+        configuration.testType match {
+            case "http" => new HttpServer(configuration, client, statisticSaver)
+            case "grpc" => new GRPCServer(configuration)
+            case _      => new HttpServer(configuration, client, statisticSaver)
+        }
+
     val serverFunc = for {
         configuration <- IO.fromEither(Configuration.init())
 
         infoGenerator  = new InfoGenerator(configuration)
         statisticSaver = new StatisticSaver(configuration)
-        client         = new HttpClient(configuration)
-        director = configuration.testType match {
-            case "http" =>
-                new HTTPDirector(infoGenerator, client, configuration, statisticSaver)
-            case _ => new HTTPDirector(infoGenerator, client, configuration, statisticSaver)
-        }
+        client         = clientF(configuration)
+        director       = new HTTPDirector(infoGenerator, client, configuration, statisticSaver)
 
-        server           <- new HttpServer(configuration, client, statisticSaver).run().start
+        server           <- serverF(configuration, client, statisticSaver).run().start
         _                <- IO.sleep(5.seconds)
         messageGenerator <- director.startRandomWorks().start
 
