@@ -1,21 +1,59 @@
 package grpc
 
+import cats.effect.unsafe.IORuntime
 import cats.effect.{ExitCode, IO}
 import cipher.XORCipher
 import config.Configuration.ConfigInstance
-import director.Server
+import director.{Client, Server}
 import fs2.grpc.syntax.all._
-import grpc.test.{InterlocutorGrpc, RequestInfo, RequestResult}
+import grpc.interlocutor.{InterlocutorGrpc, RequestInfo, RequestResult}
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
+import statSaver.StatisticSaver
+import generator.GenerationInfo
 
+import java.time.LocalDateTime
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-class GRPCServer(config: ConfigInstance)(implicit val executionContext: ExecutionContext) extends Server {
+class GRPCServer(config: ConfigInstance, client: Client, saver: StatisticSaver)(
+    implicit val executionContext: ExecutionContext, val runtime: IORuntime) extends Server {
 
     private class GRPCServiceImpl() extends InterlocutorGrpc.Interlocutor {
         override def p2P(request: RequestInfo): Future[RequestResult] = {
             val encryptedContent = XORCipher.encryptOrDecrypt(request.content, request.key)
             Future(RequestResult(content = encryptedContent))
+        }
+
+        override def redirect(request: RequestInfo): Future[RequestResult] = {
+            val id = UUID.fromString(request.uuid)
+
+            def saveReturn(content: String): IO[RequestResult] = {
+                saver.saveResultInFile(id, "redirectReturn", config.interlocutorsInfo.selfNumber,
+                    LocalDateTime.now, XORCipher.encryptOrDecrypt(content, request.key)) *>
+                    IO(RequestResult())
+            }
+
+            def redirectToNext(nextNumber: Int, redirectPath: String, content: String) = {
+                val cryptContent = XORCipher.encryptOrDecrypt(content, request.key)
+                val info = GenerationInfo(id, nextNumber, cryptContent, request.key)
+                val infoWithRedirList = info.copy(source = redirectPath + "\n" + info.source)
+                for {
+                    _ <- saver.saveResultInFile(id, "redirectNext",
+                        nextNumber, LocalDateTime.now, info.source, List(redirectPath))
+                    _ <- client.makeRequest(infoWithRedirList, "redirect").start
+                    result <- IO(RequestResult())
+                } yield result
+            }
+
+            (for {
+                body <- IO(request.content)
+                nextStr = body.takeWhile(_ != '\n')
+                nextNumber = nextStr.split(';').headOption.flatMap(_.toIntOption)
+                content = body.dropWhile(_ != '\n').drop(1)
+                result <- nextNumber.fold(saveReturn(content)) { redirNext =>
+                    redirectToNext(redirNext, nextStr.split(';').tail.mkString(";"), content)
+                }
+            } yield result).unsafeToFuture
         }
     }
 

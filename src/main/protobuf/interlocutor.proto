@@ -4,6 +4,7 @@ package grpc;
 
 service Interlocutor {
   rpc p2p (RequestInfo) returns (RequestResult) {}
+  rpc redirect (RequestInfo) returns (RequestResult) {}
 }
 
 message RequestInfo {

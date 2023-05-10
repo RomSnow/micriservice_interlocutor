@@ -1,3 +1,4 @@
+import cats.effect.unsafe.IORuntime
 import cats.effect.{ExitCode, IO, IOApp}
 import config.Configuration
 import config.Configuration.ConfigInstance
@@ -13,6 +14,7 @@ import scala.concurrent.duration.DurationInt
 
 object Main extends IOApp {
     implicit val execContext: ExecutionContextExecutor = global
+    implicit val runtimeIO: IORuntime = cats.effect.unsafe.implicits.global
 
     val clientF = (configuration: ConfigInstance) =>
         configuration.testType match {
@@ -24,7 +26,7 @@ object Main extends IOApp {
     val serverF = (configuration: ConfigInstance, client: Client, statisticSaver: StatisticSaver) =>
         configuration.testType match {
             case "http" => new HttpServer(configuration, client, statisticSaver)
-            case "grpc" => new GRPCServer(configuration)
+            case "grpc" => new GRPCServer(configuration, client, statisticSaver)
             case _      => new HttpServer(configuration, client, statisticSaver)
         }
 
