@@ -2,6 +2,7 @@ package config
 
 import com.typesafe.config._
 
+import scala.jdk.CollectionConverters.SetHasAsScala
 import scala.util.Try
 
 object Configuration {
@@ -10,7 +11,8 @@ object Configuration {
         serverNetwork: ServerNetwork,
         interlocutorsInfo: InterlocutorsInfo,
         generationInfo: GenerationConf,
-        fileConf: StatFileConf
+        fileConf: StatFileConf,
+        kafkaConfigMap: Map[String, AnyRef]
     )
 
     object ConfigInstance {
@@ -20,7 +22,8 @@ object Configuration {
                 ServerNetwork.from(config),
                 InterlocutorsInfo.from(config),
                 GenerationConf.from(config),
-                StatFileConf.from(config)
+                StatFileConf.from(config),
+                KafkaMapConfig.from(config)
             )
     }
 
@@ -78,6 +81,13 @@ object Configuration {
             StatFileConf(
                 config.getString("statistic_file_conf.file_full_name")
             )
+    }
+
+    object KafkaMapConfig {
+        def from(config: Config): Map[String, AnyRef] = {
+            val configItem = config.atKey("kafka-producer-config")
+            configItem.root.keySet.asScala.map(key ⇒ key -> config.getAnyRef(key)).toMap
+        }
     }
 
     def init(): Either[Throwable, ConfigInstance] =

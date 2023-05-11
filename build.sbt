@@ -11,7 +11,8 @@ lazy val root = (project in file("."))
                 http4sServer ++
                 config ++
                 openCSV ++
-                grpc
+                grpc ++
+                kafka
     )
 
 externalResolvers := Resolver.defaults
@@ -27,6 +28,11 @@ lazy val catsEffect = Seq("org.typelevel" %% "cats-effect" % "3.2.9")
 lazy val openCSV = Seq("com.opencsv" % "opencsv" % "5.3")
 lazy val grpc = Seq(
     "io.grpc" % "grpc-netty-shaded" % scalapb.compiler.Version.grpcJavaVersion
+)
+lazy val kafka = Seq(
+    "org.apache.kafka" % "kafka-clients" % "2.6.0",
+    "com.nequissimus" %% "circe-kafka" % "2.7.0",
+    "io.circe" %% "circe-generic" % "0.13.0"
 )
 
 enablePlugins(JavaAppPackaging, Fs2Grpc)
