@@ -21,12 +21,28 @@ mkdir ~/containers_data;
 docker network rm sandbox;
 
 # build image
-#docker build -t microservice_interlocutor . ;
+docker build -t microservice_interlocutor . ;
 
 # create network
-
 docker network create --driver bridge \
   --subnet 192.168.0.0/24 sandbox;
+
+# start kafka
+if [[ $test_type == 'kafka' ]]; then
+  echo "start kafka";
+  topics="broadcast-topic:1:1"
+  for i in $(seq 1 $count); do
+    topics+=", ${containerName}-${i}-topic:1:1"
+  done;
+
+  docker run -d --net sandbox -p "2181:2181" --name "zookeeper" wurstmeister/zookeeper;
+  docker run -d --net sandbox -p "9092:9092" \
+    -e KAFKA_ADVERTISED_HOST_NAME=kafka \
+    -e KAFKA_CREATE_TOPICS="$topics" \
+    -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 \
+    -v ./:/etc/kafka \
+    --name "kafka" wurstmeister/kafka;
+fi
 
 #start containers
 

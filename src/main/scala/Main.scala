@@ -6,6 +6,7 @@ import director.{Client, HTTPDirector}
 import generator.InfoGenerator
 import grpc.{GRPCClient, GRPCServer}
 import httpServer.{HttpClient, HttpServer}
+import kafka.KafkaProducerClient
 import statSaver.StatisticSaver
 
 import scala.concurrent.ExecutionContext.global
@@ -14,13 +15,14 @@ import scala.concurrent.duration.DurationInt
 
 object Main extends IOApp {
     implicit val execContext: ExecutionContextExecutor = global
-    implicit val runtimeIO: IORuntime = cats.effect.unsafe.implicits.global
+    implicit val runtimeIO: IORuntime                  = cats.effect.unsafe.implicits.global
 
     val clientF = (configuration: ConfigInstance) =>
         configuration.testType match {
-            case "http" => new HttpClient(configuration)
-            case "grpc" => new GRPCClient(configuration)
-            case _      => new HttpClient(configuration)
+            case "http"  => new HttpClient(configuration)
+            case "grpc"  => new GRPCClient(configuration)
+            case "kafka" => new KafkaProducerClient(configuration)
+            case _       => new HttpClient(configuration)
         }
 
     val serverF = (configuration: ConfigInstance, client: Client, statisticSaver: StatisticSaver) =>
@@ -38,11 +40,10 @@ object Main extends IOApp {
         client         = clientF(configuration)
         director       = new HTTPDirector(infoGenerator, client, configuration, statisticSaver)
 
-        server           <- serverF(configuration, client, statisticSaver).run().start
-        _                <- IO.sleep(5.seconds)
+//        server           <- serverF(configuration, client, statisticSaver).run().start
         messageGenerator <- director.startRandomWorks().start
-
-        _ <- server.join
+//
+//        _ <- server.join
         _ <- messageGenerator.join
     } yield ()
 

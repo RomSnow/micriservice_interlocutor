@@ -2,7 +2,7 @@ package config
 
 import com.typesafe.config._
 
-import scala.jdk.CollectionConverters.SetHasAsScala
+import scala.jdk.CollectionConverters.{MapHasAsScala, SetHasAsScala}
 import scala.util.Try
 
 object Configuration {
@@ -85,8 +85,8 @@ object Configuration {
 
     object KafkaMapConfig {
         def from(config: Config): Map[String, AnyRef] = {
-            val configItem = config.atKey("kafka-producer-config")
-            configItem.root.keySet.asScala.map(key ⇒ key -> config.getAnyRef(key)).toMap
+            val configItem = config.getObject("kafka-producer-config")
+            configItem.asScala.map { case (k, v) => k -> v.unwrapped()}.toMap
         }
     }
 
