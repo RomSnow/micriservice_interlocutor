@@ -21,14 +21,14 @@ trait Director {
     def startBroadcastScript(): IO[Unit]
     def startRedirectScript(): IO[Unit]
 
-    private def getScript(): IO[() => IO[Unit]] = {
+    private def getScript(): IO[() => IO[Unit]] = IO{
         val seed = Random.between(1, 101)
-        val script = seed match {
+        println("seed " + seed)
+        seed match {
             case s if s <= 60 => scripts(0)
             case s if (60 < s) && (s <= 80) => scripts(1)
             case _ => scripts(2)
         }
-        IO(script)
     }
 
     def startRandomWorks(): IO[Unit] = {

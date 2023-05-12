@@ -11,7 +11,8 @@ import java.util.UUID
 case class KafkaRequestInfo(
                                uuid: UUID,
                                key: String,
-                               content: String
+                               content: String,
+                               host: Int
                            )
 
 object KafkaRequestInfo {
@@ -20,5 +21,6 @@ object KafkaRequestInfo {
     val serializer: Serializer[KafkaRequestInfo] = implicitly
     val deserializer: Deserializer[KafkaRequestInfo] = implicitly
 
-    def from(info: GenerationInfo): KafkaRequestInfo = KafkaRequestInfo(info.id, info.key, info.source)
+    def from(info: GenerationInfo, host: Int): KafkaRequestInfo =
+        KafkaRequestInfo(info.id, info.key, info.source, host)
 }

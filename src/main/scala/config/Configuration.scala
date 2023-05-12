@@ -12,7 +12,8 @@ object Configuration {
         interlocutorsInfo: InterlocutorsInfo,
         generationInfo: GenerationConf,
         fileConf: StatFileConf,
-        kafkaConfigMap: Map[String, AnyRef]
+        kafkaProducerConfigMap: Map[String, AnyRef],
+        kafkaConsumerConfigMap: Map[String, AnyRef]
     )
 
     object ConfigInstance {
@@ -23,7 +24,8 @@ object Configuration {
                 InterlocutorsInfo.from(config),
                 GenerationConf.from(config),
                 StatFileConf.from(config),
-                KafkaMapConfig.from(config)
+                KafkaMapConfig.from(config, "kafka-producer-config"),
+                KafkaMapConfig.from(config, "kafka-consumer-config")
             )
     }
 
@@ -84,9 +86,9 @@ object Configuration {
     }
 
     object KafkaMapConfig {
-        def from(config: Config): Map[String, AnyRef] = {
-            val configItem = config.getObject("kafka-producer-config")
-            configItem.asScala.map { case (k, v) => k -> v.unwrapped()}.toMap
+        def from(config: Config, objectName: String): Map[String, AnyRef] = {
+            val configItem = config.getObject(objectName)
+            configItem.asScala.map { case (k, v) => k -> v.unwrapped() }.toMap
         }
     }
 
