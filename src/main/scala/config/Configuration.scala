@@ -8,24 +8,28 @@ import scala.util.Try
 object Configuration {
     case class ConfigInstance(
         testType: String,
+        workingMode: String,
         serverNetwork: ServerNetwork,
         interlocutorsInfo: InterlocutorsInfo,
         generationInfo: GenerationConf,
         fileConf: StatFileConf,
         kafkaProducerConfigMap: Map[String, AnyRef],
-        kafkaConsumerConfigMap: Map[String, AnyRef]
+        kafkaConsumerConfigMap: Map[String, AnyRef],
+        specialModeConf: SpecialModeConf
     )
 
     object ConfigInstance {
         def from(config: Config): ConfigInstance =
             ConfigInstance(
                 config.getString("service_type"),
+                config.getString("working_mode"),
                 ServerNetwork.from(config),
                 InterlocutorsInfo.from(config),
                 GenerationConf.from(config),
                 StatFileConf.from(config),
                 KafkaMapConfig.from(config, "kafka-producer-config"),
-                KafkaMapConfig.from(config, "kafka-consumer-config")
+                KafkaMapConfig.from(config, "kafka-consumer-config"),
+                SpecialModeConf.from(config)
             )
     }
 
@@ -90,6 +94,15 @@ object Configuration {
             val configItem = config.getObject(objectName)
             configItem.asScala.map { case (k, v) => k -> v.unwrapped() }.toMap
         }
+    }
+
+    case class SpecialModeConf(
+                                  specialServerNumber: Int
+                              )
+
+    object SpecialModeConf {
+        def from(config: Config): SpecialModeConf =
+            SpecialModeConf(config.getInt("special-mode-options.server_number"))
     }
 
     def init(): Either[Throwable, ConfigInstance] =

@@ -12,7 +12,7 @@ trait Director {
     protected val client: Client
     protected val config: ConfigInstance
 
-    private val scripts: Seq[() => IO[Unit]] = List(
+    protected val scripts: Seq[() => IO[Unit]] = List(
         () => startP2PScript(),
         () => startRedirectScript(),
         () => startBroadcastScript()
@@ -21,7 +21,7 @@ trait Director {
     def startBroadcastScript(): IO[Unit]
     def startRedirectScript(): IO[Unit]
 
-    private def getScript(): IO[() => IO[Unit]] = IO{
+    protected def getScript(): IO[() => IO[Unit]] = IO{
         val seed = Random.between(1, 101)
         println("seed " + seed)
         seed match {

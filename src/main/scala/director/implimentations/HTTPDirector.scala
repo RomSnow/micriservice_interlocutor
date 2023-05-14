@@ -1,38 +1,45 @@
-package director
+package director.implimentations
 
 import cats.effect.IO
 import cats.implicits.catsSyntaxParallelSequence1
 import config.Configuration.ConfigInstance
+import director.{Client, Director}
 import generator.InfoGenerator
 import statSaver.StatisticSaver
 
-import java.time.LocalDateTime
-
-class KafkaDirector(
-                       val infoGenerator: InfoGenerator,
-                       val client: Client,
-                       val config: ConfigInstance,
-                       saver: StatisticSaver
-                   ) extends Director {
+class HTTPDirector(
+    val infoGenerator: InfoGenerator,
+    val client: Client,
+    val config: ConfigInstance,
+    saver: StatisticSaver
+) extends Director {
 
     override def startP2PScript(): IO[Unit] = {
         val info = infoGenerator.genInfo()
         val path = "p2p"
         for {
             saveSend <- saver.saveResultInFile(info.id, "sendP2P", info.destination, System.currentTimeMillis, info.source, List(info.key)).start
-            _ <- client.makeRequest(info, path)
+            result <- client.makeRequest(info, path)
+            saveResult <- saver.saveResultInFile(info.id, "responseP2P", info.destination, System.currentTimeMillis, result).start
             _ <- saveSend.join
+            _ <- saveResult.join
         } yield ()
     }
 
     override def startBroadcastScript(): IO[Unit] = {
         val info = infoGenerator.genInfo()
+        val allInterlocutors = (1 to config.interlocutorsInfo.count)
+            .filterNot(_ == config.interlocutorsInfo.selfNumber).toList
         val path = "broadcast"
-        for {
-            saveSend <- saver.saveResultInFile(info.id, "sendBroadcast", 0, System.currentTimeMillis, info.source, List(info.key)).start
-            _ <- client.makeRequest(info, path)
-            _ <- saveSend.join
-        } yield ()
+        allInterlocutors.map { dest =>
+            for {
+                saveSend <- saver.saveResultInFile(info.id, "sendBroadcast", dest, System.currentTimeMillis, info.source, List(info.key)).start
+                result <- client.makeRequest(info.copy(destination = dest), path)
+                saveResult <- saver.saveResultInFile(info.id, "responseBroadcast", dest, System.currentTimeMillis, result).start
+                _ <- saveSend.join
+                _ <- saveResult.join
+            } yield ()
+        }.parSequence.void
     }
 
     override def startRedirectScript(): IO[Unit] = {
@@ -47,5 +54,4 @@ class KafkaDirector(
             _ <- save.join
         } yield ()
     }
-
 }

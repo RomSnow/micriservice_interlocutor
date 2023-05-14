@@ -1,13 +1,15 @@
 #!/bin/bash
 
 containerName='microservice-model';
+mode="default";
 
-while getopts n:t:d flag
+while getopts n:t:d:m: flag
 do
     case "${flag}" in
         n) count=${OPTARG};;
         t) test_type=${OPTARG};;
         d) duration=${OPTARG};;
+        m) mode=${OPTARG};;
     esac
 done
 
@@ -22,7 +24,7 @@ mkdir ~/containers_data;
 docker network rm sandbox;
 
 # build image
-#docker build -t microservice_interlocutor . ;
+docker build -t microservice_interlocutor . ;
 
 # create network
 docker network create --driver bridge \
@@ -50,6 +52,7 @@ fi
 for i in $(seq 1 $count); do
   echo "${containerName}-${i}";
   docker run -d --net sandbox --expose=80 --env-file .env \
+   -e WORKING_MODE=$mode \
    -e INTERLOCUTOR_SELF_NUMBER=$i \
    -e INTERLOCUTORS_COUNT=$count \
    -e INTERLOCUTORS_NAME=$containerName \
