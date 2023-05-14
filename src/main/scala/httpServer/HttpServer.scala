@@ -36,7 +36,7 @@ class HttpServer(config: ConfigInstance, client: Client, saver: StatisticSaver)
             case req @ POST -> Root / "redirect" / UUIDVar(id) / "from" / IntVar(host) / "key" / key => {
                 def saveReturn(content: String): IO[Response[IO]] = {
                     saver.saveResultInFile(id, "redirectReturn", config.interlocutorsInfo.selfNumber,
-                        LocalDateTime.now, XORCipher.encryptOrDecrypt(content, key)) *>
+                        System.currentTimeMillis, XORCipher.encryptOrDecrypt(content, key)) *>
                         Ok("")
                 }
 
@@ -46,8 +46,8 @@ class HttpServer(config: ConfigInstance, client: Client, saver: StatisticSaver)
                     val infoWithRedirList = info.copy(source = redirectPath + "\n" + info.source)
                     for {
                         _ <- saver.saveResultInFile(id, "redirectNext",
-                            nextNumber, LocalDateTime.now, info.source, List(redirectPath))
-                        _ <- client.makeRequest(infoWithRedirList, s"/redirect/$id/from/$host/key/$key").start
+                            nextNumber, System.currentTimeMillis, info.source, List(redirectPath))
+                        _ <- client.makeRequest(infoWithRedirList, "redirect")
                         result <- Ok("")
                     } yield result
                 }

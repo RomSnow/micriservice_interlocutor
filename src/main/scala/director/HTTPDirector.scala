@@ -20,9 +20,9 @@ class HTTPDirector(
         val info = infoGenerator.genInfo()
         val path = "p2p"
         for {
-            saveSend <- saver.saveResultInFile(info.id, "sendP2P", info.destination, LocalDateTime.now, info.source, List(info.key)).start
+            saveSend <- saver.saveResultInFile(info.id, "sendP2P", info.destination, System.currentTimeMillis, info.source, List(info.key)).start
             result <- client.makeRequest(info, path)
-            saveResult <- saver.saveResultInFile(info.id, "responseP2P", info.destination, LocalDateTime.now, result).start
+            saveResult <- saver.saveResultInFile(info.id, "responseP2P", info.destination, System.currentTimeMillis, result).start
             _ <- saveSend.join
             _ <- saveResult.join
         } yield ()
@@ -35,9 +35,9 @@ class HTTPDirector(
         val path = "broadcast"
         allInterlocutors.map { dest =>
             for {
-                saveSend <- saver.saveResultInFile(info.id, "sendBroadcast", dest, LocalDateTime.now, info.source, List(info.key)).start
+                saveSend <- saver.saveResultInFile(info.id, "sendBroadcast", dest, System.currentTimeMillis, info.source, List(info.key)).start
                 result <- client.makeRequest(info.copy(destination = dest), path)
-                saveResult <- saver.saveResultInFile(info.id, "responseBroadcast", dest, LocalDateTime.now, result).start
+                saveResult <- saver.saveResultInFile(info.id, "responseBroadcast", dest, System.currentTimeMillis, result).start
                 _ <- saveSend.join
                 _ <- saveResult.join
             } yield ()
@@ -50,7 +50,7 @@ class HTTPDirector(
         val infoWithRedirList = info.copy(source = redirectPath.tail.mkString(";") + "\n" + info.source)
         val path = "redirect"
         for {
-            save <- saver.saveResultInFile(info.id, "startRedirect", info.destination, LocalDateTime.now,
+            save <- saver.saveResultInFile(info.id, "startRedirect", info.destination, System.currentTimeMillis,
                 info.source, List(info.key, redirectPath.mkString(";"))).start
             _ <- client.makeRequest(infoWithRedirList, path)
             _ <- save.join

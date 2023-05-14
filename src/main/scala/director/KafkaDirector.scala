@@ -19,7 +19,7 @@ class KafkaDirector(
         val info = infoGenerator.genInfo()
         val path = "p2p"
         for {
-            saveSend <- saver.saveResultInFile(info.id, "sendP2P", info.destination, LocalDateTime.now, info.source, List(info.key)).start
+            saveSend <- saver.saveResultInFile(info.id, "sendP2P", info.destination, System.currentTimeMillis, info.source, List(info.key)).start
             _ <- client.makeRequest(info, path)
             _ <- saveSend.join
         } yield ()
@@ -29,7 +29,7 @@ class KafkaDirector(
         val info = infoGenerator.genInfo()
         val path = "broadcast"
         for {
-            saveSend <- saver.saveResultInFile(info.id, "sendBroadcast", 0, LocalDateTime.now, info.source, List(info.key)).start
+            saveSend <- saver.saveResultInFile(info.id, "sendBroadcast", 0, System.currentTimeMillis, info.source, List(info.key)).start
             _ <- client.makeRequest(info, path)
             _ <- saveSend.join
         } yield ()
@@ -41,7 +41,7 @@ class KafkaDirector(
         val infoWithRedirList = info.copy(source = redirectPath.tail.mkString(";") + "\n" + info.source)
         val path = "redirect"
         for {
-            save <- saver.saveResultInFile(info.id, "startRedirect", info.destination, LocalDateTime.now,
+            save <- saver.saveResultInFile(info.id, "startRedirect", info.destination, System.currentTimeMillis,
                 info.source, List(info.key, redirectPath.mkString(";"))).start
             _ <- client.makeRequest(infoWithRedirList, path)
             _ <- save.join

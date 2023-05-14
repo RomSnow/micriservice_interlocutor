@@ -49,7 +49,7 @@ class KafkaConsumerServer(config: ConfigInstance, client: Client, saver: Statist
             requestInfo.uuid,
             key,
             requestInfo.host,
-            LocalDateTime.now,
+            System.currentTimeMillis,
             requestInfo.content
         )
 
@@ -60,7 +60,7 @@ class KafkaConsumerServer(config: ConfigInstance, client: Client, saver: Statist
             val infoWithRedirList = info.copy(source = redirectPath + "\n" + info.source)
             for {
                 _ <- saver.saveResultInFile(requestInfo.uuid, "redirectNext",
-                    destination, LocalDateTime.now, info.source, List(redirectPath))
+                    destination, System.currentTimeMillis, info.source, List(redirectPath))
                 _ <- client.makeRequest(infoWithRedirList, "redirect")
             } yield ()
         }

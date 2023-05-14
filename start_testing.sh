@@ -2,11 +2,12 @@
 
 containerName='microservice-model';
 
-while getopts n:t: flag
+while getopts n:t:d flag
 do
     case "${flag}" in
         n) count=${OPTARG};;
         t) test_type=${OPTARG};;
+        d) duration=${OPTARG};;
     esac
 done
 
@@ -21,7 +22,7 @@ mkdir ~/containers_data;
 docker network rm sandbox;
 
 # build image
-docker build -t microservice_interlocutor . ;
+#docker build -t microservice_interlocutor . ;
 
 # create network
 docker network create --driver bridge \
@@ -58,4 +59,10 @@ for i in $(seq 1 $count); do
    --name "${containerName}-${i}" microservice_interlocutor;
 done
 
+# stop containers
+if [[ $duration ]]; then
+  echo "${duration}s"
+  sleep $duration;
+  docker stop $(docker ps -aq);
+fi
 

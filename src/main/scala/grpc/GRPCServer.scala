@@ -29,7 +29,7 @@ class GRPCServer(config: ConfigInstance, client: Client, saver: StatisticSaver)(
 
             def saveReturn(content: String): IO[RequestResult] = {
                 saver.saveResultInFile(id, "redirectReturn", config.interlocutorsInfo.selfNumber,
-                    LocalDateTime.now, XORCipher.encryptOrDecrypt(content, request.key)) *>
+                    System.currentTimeMillis, XORCipher.encryptOrDecrypt(content, request.key)) *>
                     IO(RequestResult())
             }
 
@@ -39,7 +39,7 @@ class GRPCServer(config: ConfigInstance, client: Client, saver: StatisticSaver)(
                 val infoWithRedirList = info.copy(source = redirectPath + "\n" + info.source)
                 for {
                     _ <- saver.saveResultInFile(id, "redirectNext",
-                        nextNumber, LocalDateTime.now, info.source, List(redirectPath))
+                        nextNumber, System.currentTimeMillis, info.source, List(redirectPath))
                     _ <- client.makeRequest(infoWithRedirList, "redirect").start
                     result <- IO(RequestResult())
                 } yield result

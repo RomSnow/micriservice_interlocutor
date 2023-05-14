@@ -5,9 +5,8 @@ import com.opencsv._
 import config.Configuration.ConfigInstance
 
 import java.io._
-import java.time.LocalDateTime
 import java.util.UUID
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters.IterableHasAsJava
 import scala.util._
 
 class StatisticSaver(config: ConfigInstance) {
@@ -18,7 +17,7 @@ class StatisticSaver(config: ConfigInstance) {
         id: UUID,
         actionType: String,
         destination: Int,
-        time: LocalDateTime,
+        time: Long,
         content: String,
         variables: List[String] = Nil
     ): IO[Unit] = IO.fromTry {
