@@ -25,7 +25,7 @@ class InfoGenerator(config: ConfigInstance) {
         Random.alphanumeric.take(config.generationInfo.keyMaxSize).mkString
 
     def getRedirectPath(): List[Int] =
-        (1 until config.generationInfo.redirectPathMaxSize).foldLeft(List(config.interlocutorsInfo.selfNumber)) { case (l, _) =>
+        (1 until Random.between(2, config.generationInfo.redirectPathMaxSize)).foldLeft(List(config.interlocutorsInfo.selfNumber)) { case (l, _) =>
             val last = l.head
             val next = getDestination(last, last) match {
                 case result if result == config.interlocutorsInfo.selfNumber => getDestination(last, last)

@@ -69,3 +69,4 @@ if [[ $duration ]]; then
   docker stop $(docker ps -aq);
 fi
 
+zip -r /home/ird/TestResults/containers-data-$(date +%d.%m-%H.%M).zip /home/ird/containers_data
