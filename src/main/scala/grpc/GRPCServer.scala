@@ -21,7 +21,12 @@ class GRPCServer(config: ConfigInstance, client: Client, saver: StatisticSaver)(
     private class GRPCServiceImpl() extends InterlocutorGrpc.Interlocutor {
         override def p2P(request: RequestInfo): Future[RequestResult] = {
             val encryptedContent = XORCipher.encryptOrDecrypt(request.content, request.key)
-            Future(RequestResult(content = encryptedContent))
+            (for {
+                _ <- IO.whenA(config.workingMode == "all_to_one")(
+                    saver.saveResultInFile(UUID.fromString(request.uuid), "p2pGet",
+                        0, System.currentTimeMillis, request.content)
+                )
+            } yield RequestResult(content = encryptedContent)).unsafeToFuture()
         }
 
         override def redirect(request: RequestInfo): Future[RequestResult] = {

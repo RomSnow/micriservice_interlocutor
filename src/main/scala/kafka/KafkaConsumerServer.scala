@@ -11,7 +11,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
 import statSaver.StatisticSaver
 
-import java.time.{Duration, LocalDateTime}
+import java.time.Duration
 import scala.jdk.CollectionConverters.{IteratorHasAsScala, MapHasAsJava, SeqHasAsJava}
 
 class KafkaConsumerServer(config: ConfigInstance, client: Client, saver: StatisticSaver)
@@ -41,7 +41,14 @@ class KafkaConsumerServer(config: ConfigInstance, client: Client, saver: Statist
         val ansContent = XORCipher.encryptOrDecrypt(requestInfo.content, requestInfo.key)
         val ansInfo =
             GenerationInfo(requestInfo.uuid, requestInfo.host, ansContent, requestInfo.key)
-        client.makeRequest(ansInfo, s"$key-response").void
+
+        for {
+            _ <- IO.whenA(config.workingMode == "all_to_one")(
+                saver.saveResultInFile(requestInfo.uuid, "p2pGet", 0,
+                    System.currentTimeMillis, requestInfo.content)
+            )
+            _ <- client.makeRequest(ansInfo, s"$key-response")
+        } yield ()
     }
 
     private def saveInfo(key: String, requestInfo: KafkaRequestInfo) =

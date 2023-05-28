@@ -60,14 +60,16 @@ object Main extends IOApp {
     private lazy val serverFunc = for {
         configuration <- IO.fromEither(Configuration.init())
 
-        infoGenerator  = new InfoGenerator(configuration)
+        infoGenerator = new InfoGenerator(configuration)
         statisticSaver = new StatisticSaver(configuration)
-        client         = clientF(configuration)
-        director       = directorF(infoGenerator, client, configuration, statisticSaver)
+        client = clientF(configuration)
+        director = directorF(infoGenerator, client, configuration, statisticSaver)
         server = serverF(configuration, client, statisticSaver)
 
-        server           <- server.run().start
-        _                <- IO.sleep(5.seconds)
+        server <- server.run().start
+
+        secondsToWait = (configuration.interlocutorsInfo.count - configuration.interlocutorsInfo.selfNumber) * 3
+        _ <- IO.sleep(secondsToWait.seconds)
         messageGenerator <- getMessageGenerationFunction(director, configuration).start
 
         _ <- server.join

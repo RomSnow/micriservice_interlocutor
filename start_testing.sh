@@ -18,13 +18,13 @@ if [[ $(docker ps -aq) ]]; then
   docker stop $(docker ps -aq);
   docker rm $(docker ps -aq);
 fi
-sudo rm -rf ~/containers_data/;
-mkdir ~/containers_data;
+sudo rm -rf /home/ird/containers_data/;
+mkdir /home/ird/containers_data;
 #docker rmi microservice_interlocutor;
 docker network rm sandbox;
 
 # build image
-docker build -t microservice_interlocutor . ;
+# docker build -t microservice_interlocutor . ;
 
 # create network
 docker network create --driver bridge \
@@ -58,7 +58,7 @@ for i in $(seq 1 $count); do
    -e INTERLOCUTORS_NAME=$containerName \
    -e STAT_FILE_FULL_NAME=/data/result.txt \
    -e SERVICE_TYPE=$test_type \
-   -v ~/containers_data/$i:/data \
+   -v /home/ird/containers_data/$i:/data \
    --name "${containerName}-${i}" microservice_interlocutor;
 done
 
@@ -69,4 +69,4 @@ if [[ $duration ]]; then
   docker stop $(docker ps -aq);
 fi
 
-zip -r /home/ird/TestResults/containers-data-$(date +%d.%m-%H.%M).zip /home/ird/containers_data
+zip -r /home/ird/TestResults/results-$(date +%d.%m-%H.%M)-${test_type}-${count}-${mode}.zip /home/ird/containers_data

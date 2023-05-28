@@ -35,7 +35,7 @@ trait Director {
         for {
             script <- getScript()
             _      <- script()
-            _      <- IO.sleep(Random.between(1, config.generationInfo.sendDurationSec).seconds)
+            _      <- IO.sleep(Random.between(500, config.generationInfo.sendDurationSec * 1000).milliseconds)
         } yield ()
     }.handleErrorWith(e => IO(println("DIRECTOR ERROR " + e.getMessage))).foreverM
 }

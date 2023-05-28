@@ -30,6 +30,9 @@ class HttpServer(config: ConfigInstance, client: Client, saver: StatisticSaver)
             case req @ POST -> Root / "p2p" / UUIDVar(id) / "key" / key =>
                 for {
                     body <- req.as[String]
+                    _ <- IO.whenA(config.workingMode == "all_to_one")(
+                        saver.saveResultInFile(id, "p2pGet", 0, System.currentTimeMillis, body)
+                    )
                     result <- Ok(XORCipher.encryptOrDecrypt(body, key))
                 } yield result
 
